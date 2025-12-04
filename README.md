@@ -1,54 +1,37 @@
-# PassPort Inc. - Sistema de Autenticación
+# 🛡️ PassPort-API - Sistema de Autenticación y Autorización
 
-Sistema de autenticación robusto y seguro con soporte para JWT y sesiones persistentes, implementando las mejores prácticas de seguridad web.
+API REST segura que implementa autenticación dual (JWT y Sessions), control de acceso basado en roles (RBAC) y múltiples capas de seguridad.
 
-## 🚀 Características
+## 🚀 Características principales
 
-- ✅ **Registro y Login** con email y contraseña
-- ✅ **Autenticación JWT** (stateless)
-- ✅ **Sesiones persistentes** con cookies seguras (stateful)
-- ✅ **Protección CSRF** para operaciones críticas
-- ✅ **Rate Limiting** contra ataques de fuerza bruta
-- ✅ **Control de acceso basado en roles** (RBAC)
-- ✅ **Validación y sanitización** de datos de entrada
-- ✅ **Logging de auditoría** de intentos de autenticación
-- ✅ **Encriptación de contraseñas** con bcrypt
-- ✅ **Headers de seguridad** con Helmet
+- ✅ **Autenticación dual**: JWT (stateless) y Sessions (stateful)
+- ✅ **RBAC**: Control de acceso por roles (User/Admin)
+- ✅ **Seguridad multicapa**: CSRF, Rate Limiting, Helmet, bcrypt
+- ✅ **Validación robusta**: Sanitización y validación de entradas
+- ✅ **Cookies seguras**: HttpOnly, Secure, SameSite
+- ✅ **Base de datos SQLite**: Persistencia simple y portátil
+- ✅ **Verificación de tokens**: Endpoint para validar JWT
 
 ## 📋 Requisitos
 
-- Node.js 16+
-- npm o yarn
+- Node.js v14+
+- npm v6+
 
 ## 🔧 Instalación
 
 ```bash
-# Clonar el repositorio
+# Clonar repositorio
 git clone https://github.com/MaxiOru/The_Huddle-Challenge_8.git
 cd The_Huddle-Challenge_8
 
 # Instalar dependencias
 npm install
 
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus valores
-
 # Iniciar servidor
 npm start
 ```
 
-## 🌐 Uso
-
-### Iniciar el servidor
-
-```bash
-# Modo producción
-npm start
-
-# Modo desarrollo (con auto-reload)
-npm run dev
-```
+El servidor estará disponible en `http://localhost:3000`
 
 El servidor estará disponible en: `http://localhost:3000`
 
@@ -64,48 +47,37 @@ GET /auth/csrf-token
 **Respuesta:**
 ```json
 {
-  "csrfToken": "token-generado"
+  "csrfToken": "abc123xyz..."
 }
 ```
 
-#### Registrar usuario
-```http
-POST /auth/register
-Content-Type: application/json
-X-CSRF-Token: token-csrf
-
+### 2. Registrar usuario
+```bash
+POST http://localhost:3000/auth/register
+Headers:
+  X-CSRF-Token: abc123xyz...
+Body:
 {
-  "email": "usuario@example.com",
-  "password": "contraseña123",
-  "username": "nombreusuario"
+  "email": "user@test.com",
+  "password": "password123",
+  "role": "user"
 }
 ```
 
-**Respuesta exitosa:**
-```json
+### 3. Login con JWT
+```bash
+POST http://localhost:3000/auth/login
+Headers:
+  X-CSRF-Token: abc123xyz...
+Body:
 {
-  "message": "Usuario registrado correctamente",
-  "user": {
-    "id": 1,
-    "email": "usuario@example.com"
-  }
-}
-```
-
-#### Login con JWT
-```http
-POST /auth/login
-Content-Type: application/json
-X-CSRF-Token: token-csrf
-
-{
-  "email": "usuario@example.com",
-  "password": "contraseña123",
+  "email": "user@test.com",
+  "password": "password123",
   "type": "jwt"
 }
 ```
 
-**Respuesta exitosa:**
+**Respuesta:**
 ```json
 {
   "message": "Login exitoso (jwt)",
@@ -113,58 +85,60 @@ X-CSRF-Token: token-csrf
 }
 ```
 
-#### Login con Sesión
-```http
-POST /auth/login
-Content-Type: application/json
-X-CSRF-Token: token-csrf
-
+### 4. Login con Session
+```bash
+POST http://localhost:3000/auth/login
+Headers:
+  X-CSRF-Token: abc123xyz...
+Body:
 {
-  "email": "usuario@example.com",
-  "password": "contraseña123",
+  "email": "user@test.com",
+  "password": "password123",
   "type": "session"
 }
 ```
 
-**Respuesta exitosa:**
+**Respuesta:**
 ```json
 {
   "message": "Login exitoso (session)",
   "user": {
     "id": 1,
-    "email": "usuario@example.com",
+    "email": "user@test.com",
     "role": "user"
   }
 }
 ```
+*Cookie sid enviada automáticamente*
 
-#### Logout
-```http
-POST /auth/logout
-X-CSRF-Token: token-csrf
-```
-
-**Respuesta:**
-```json
+### 5. Verificar token JWT
+```bash
+POST http://localhost:3000/auth/verify-token
+Body:
 {
-  "message": "Sesión cerrada"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
-### Administración (requiere rol admin)
-
-#### Listar usuarios
-```http
-GET /admin/users
-Authorization: Bearer <jwt-token>
+**Respuesta válida:**
+```json
+{
+  "message": "Token válido"
+}
 ```
 
-**Respuesta:**
+**Respuesta inválida:**
 ```json
-[
-  {
-    "id": 1,
-    "email": "admin@example.com",
+{
+  "message": "Token inválido o expirado"
+}
+```
+
+### 6. Acceder a ruta de admin (con JWT)
+```bash
+GET http://localhost:3000/admin/users
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     "role": "admin"
   },
   {
@@ -175,84 +149,79 @@ Authorization: Bearer <jwt-token>
 ]
 ```
 
-#### Eliminar usuario
-```http
-DELETE /admin/users/:id
-Authorization: Bearer <jwt-token>
-X-CSRF-Token: token-csrf
+### 7. Acceder a ruta de admin (con Session)
+```bash
+GET http://localhost:3000/admin/users
+Cookie: sid=abc123...
 ```
 
-**Respuesta:**
-```json
-{
-  "message": "Usuario eliminado"
-}
+### 8. Logout
+```bash
+POST http://localhost:3000/auth/logout
+Headers:
+  X-CSRF-Token: abc123xyz...
+  Authorization: Bearer <token>  (o Cookie: sid=<sessionId>)
 ```
 
-## 🏗️ Estructura del Proyecto
+## 🏗️ Arquitectura
 
 ```
-.
-├── src/
-│   ├── server.js              # Servidor principal con configuración
-│   ├── middleware.js          # Todos los middlewares consolidados
-│   ├── utils.js               # Utilidades (JWT, bcrypt, logger)
-│   ├── config/
-│   │   └── database.js        # Configuración de base de datos
-│   ├── controllers/
-│   │   ├── authController.js  # Controlador de autenticación
-│   │   └── adminController.js # Controlador de administración
-│   ├── models/
-│   │   ├── userModels.js      # Modelo de usuarios
-│   │   └── sessionModel.js    # Modelo de sesiones
-│   ├── data/
-│   │   └── database.db        # Base de datos SQLite
-│   └── logs/
-│       └── auth.log           # Logs de autenticación
-├── .env                       # Variables de entorno
-├── package.json               # Dependencias del proyecto
-└── README.md                  # Este archivo
+src/
+├── config/
+│   ├── csrf.js           # Configuración CSRF
+│   └── database.js       # Configuración SQLite
+├── controllers/
+│   ├── adminController.js  # Endpoints de administración
+│   └── authController.js   # Endpoints de autenticación
+├── middleware/
+│   ├── auth.js            # Middleware de autenticación (JWT/Session)
+│   ├── authorization.js   # Middleware RBAC
+│   ├── rateLimiter.js     # Limitación de peticiones
+│   └── validation.js      # Validación y sanitización
+├── models/
+│   ├── sessionModel.js    # Modelo de sesiones
+│   └── userModels.js      # Modelo de usuarios
+├── utils/
+│   ├── jwt.js             # Utilidades JWT
+│   └── password.js        # Utilidades de hash
+└── server.js              # Punto de entrada
 ```
 
-## 🔐 Seguridad
+## 🔐 Medidas de seguridad implementadas
 
-### Protecciones Implementadas
+### 1. **Hashing de contraseñas (bcrypt)**
+- Algoritmo: bcrypt con 10 salt rounds
+- Contraseñas nunca almacenadas en texto plano
 
-1. **CSRF Protection**: Tokens CSRF para operaciones POST/DELETE
-2. **Rate Limiting**: 
-   - Login: 5 intentos por 15 minutos
-   - API general: 100 peticiones por 15 minutos
-3. **Helmet**: Headers de seguridad HTTP
-4. **bcrypt**: Hash de contraseñas con salt rounds
-5. **JWT**: Tokens firmados con secreto
-6. **Cookies seguras**: httpOnly, secure (producción), sameSite
-7. **Validación de entrada**: express-validator
-8. **RBAC**: Control de acceso basado en roles
+### 2. **Autenticación dual**
+- **JWT**: Tokens firmados con HS256, expiración 1h
+- **Sessions**: IDs aleatorios, expiración 7 días
 
-### Variables de Entorno
+### 3. **RBAC (Role-Based Access Control)**
+- Roles: `user`, `admin`
+- Middleware `authorizeRoles()` restringe acceso
 
-Crea un archivo `.env` en la raíz del proyecto:
+### 4. **Protección CSRF**
+- Tokens únicos por sesión
+- Validación en rutas POST/DELETE
 
-```env
-# Servidor
-PORT=3000
-NODE_ENV=development
+### 5. **Rate Limiting**
+- Login: 5 intentos cada 15 minutos
+- Previene ataques de fuerza bruta
 
-# JWT
-JWT_SECRET=tu_secreto_jwt_super_seguro_cambialo_en_produccion
-JWT_EXP=1h
+### 6. **Cookies seguras**
+- `httpOnly: true` (previene XSS)
+- `secure: false` (desarrollo local)
+- `sameSite: 'strict'` (previene CSRF)
 
-# Bcrypt
-BCRYPT_ROUNDS=10
+### 7. **Validación y sanitización**
+- express-validator en todas las entradas
+- Escape de caracteres especiales
+- Normalización de emails
 
-# Base de datos
-DB_PATH=./src/data/database.db
-
-# Logs
-LOGIN_LOG=./src/logs/auth.log
-```
-
-⚠️ **IMPORTANTE**: Cambia `JWT_SECRET` a un valor seguro en producción.
+### 8. **Helmet.js**
+- Headers de seguridad HTTP automáticos
+- Protección contra clickjacking, XSS, etc.
 
 ## 📦 Dependencias
 
@@ -262,7 +231,6 @@ LOGIN_LOG=./src/logs/auth.log
   "better-sqlite3": "^12.4.1",
   "cookie-parser": "^1.4.7",
   "csurf": "^1.11.0",
-  "dotenv": "^17.2.3",
   "express": "^5.1.0",
   "express-rate-limit": "^8.1.0",
   "express-validator": "^7.3.0",
@@ -271,116 +239,63 @@ LOGIN_LOG=./src/logs/auth.log
 }
 ```
 
-## 🧪 Pruebas con Postman
+## 📝 Notas de desarrollo
 
-1. **Obtener token CSRF**
+- **Puerto**: 3000 (hardcodeado)
+- **JWT Secret**: Hardcodeado en `src/utils/jwt.js`
+- **Expiración JWT**: 1 hora
+- **Expiración Session**: 7 días
+- **Salt rounds**: 10
    - GET `http://localhost:3000/auth/csrf-token`
-   - Guarda el `csrfToken` de la respuesta
+## 🗄️ Base de datos
 
-2. **Registrar usuario**
-   - POST `http://localhost:3000/auth/register`
-   - Headers: `X-CSRF-Token: <token-csrf>`
-   - Body: `{ "email": "test@test.com", "password": "123456" }`
-
-3. **Login con JWT**
-   - POST `http://localhost:3000/auth/login`
-   - Headers: `X-CSRF-Token: <token-csrf>`
-   - Body: `{ "email": "test@test.com", "password": "123456", "type": "jwt" }`
-   - Guarda el `token` de la respuesta
-
-4. **Acceder a rutas protegidas**
-   - GET `http://localhost:3000/admin/users`
-   - Headers: `Authorization: Bearer <jwt-token>`
-
-## 🛠️ Desarrollo
-
-### Comandos disponibles
-
-```bash
-# Iniciar servidor en modo producción
-npm start
-
-# Iniciar servidor en modo desarrollo (auto-reload)
-npm run dev
-
-# Ejecutar tests (cuando se implementen)
-npm test
+### Tabla: `users`
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT DEFAULT 'user'
+);
 ```
 
-### Agregar nuevo middleware
-
-Edita `src/middleware.js` y añade tu middleware al final del archivo:
-
-```javascript
-function miMiddleware(req, res, next) {
-  // Tu lógica aquí
-  next();
-}
-
-module.exports = {
-  // ... otros middlewares
-  miMiddleware,
-};
+### Tabla: `sessions`
+```sql
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    data TEXT,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-### Agregar nueva utilidad
+## 🔄 Flujo de autenticación
 
-Edita `src/utils.js` y añade tu función:
-
-```javascript
-function miUtilidad(param) {
-  // Tu lógica aquí
-  return resultado;
-}
-
-module.exports = {
-  // ... otras utilidades
-  miUtilidad,
-};
+### JWT Flow:
+```
+1. Cliente → POST /auth/login (type: "jwt")
+2. API valida credenciales
+3. API genera token JWT
+4. Cliente recibe token
+5. Cliente envía token en header Authorization: Bearer <token>
+6. Middleware auth verifica token con jwt.verify()
 ```
 
-## 📝 Roles de Usuario
-
-- **user**: Usuario estándar (por defecto)
-- **admin**: Administrador con permisos completos
-
-Para crear un administrador, modifica el rol directamente en la base de datos o implementa un endpoint de promoción.
-
-## 🐛 Troubleshooting
-
-### El servidor no inicia
-
-- Verifica que el puerto 3000 no esté en uso
-- Verifica que las dependencias estén instaladas: `npm install`
-- Verifica que el archivo `.env` exista y tenga las variables correctas
-
-### Error "Token inválido o expirado"
-
-- El token JWT ha expirado (por defecto 1h)
-- Solicita un nuevo token haciendo login nuevamente
-
-### Error "Demasiados intentos de inicio de sesión"
-
-- Has excedido el límite de 5 intentos en 15 minutos
-- Espera 15 minutos o reinicia el servidor en desarrollo
-
-### Base de datos corrupta
-
-```bash
-# Eliminar base de datos y dejar que se recree
-rm src/data/database.db
-npm start
+### Session Flow:
+```
+1. Cliente → POST /auth/login (type: "session")
+2. API valida credenciales
+3. API genera sessionId y lo guarda en BD
+4. API envía cookie sid=<sessionId>
+5. Navegador envía cookie automáticamente
+6. Middleware auth busca session en BD
 ```
 
 ## 📄 Licencia
 
-ISC
+MIT
 
-## 👥 Autor
+## 👨‍💻 Autor
 
-MaxiOru - [GitHub](https://github.com/MaxiOru)
-
-## 🔗 Enlaces
-
-- Repositorio: [The_Huddle-Challenge_8](https://github.com/MaxiOru/The_Huddle-Challenge_8)
-- Issues: [Reportar problema](https://github.com/MaxiOru/The_Huddle-Challenge_8/issues)
+Proyecto desarrollado como parte de The Huddle - Reto 8

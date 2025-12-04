@@ -4,7 +4,7 @@
 
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = 'mi_super_secreto_para_jwt_2025_passportinc';
+const JWT_SECRET = 'jwt_secreto_challenge_8';
 const JWT_EXPIRATION = '1h';
 
 // Genera token JWT firmado con payload y tiempo de expiración

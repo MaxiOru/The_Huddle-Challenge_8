@@ -34,7 +34,7 @@ function createAuthRouter(csrfProtection) {
         if (existingUser) {
             return res.status(409).json({ message: 'El usuario ya existe.' });
         }
-
+        //aca se crea mi usuario y a la vez en la parte del modelo se hashea la contraseña
         const created = User.create(email, password, role);
         
         res.status(201).json({
@@ -72,7 +72,7 @@ function createAuthRouter(csrfProtection) {
 
             res.cookie('sid', sessionId, {
                 httpOnly: true,
-                secure: false,
+                secure: false, // en produccion usar true
                 sameSite: 'lax',
                 maxAge: expiresMs
             });

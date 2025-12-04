@@ -8,7 +8,7 @@ const csurf = require('csurf');
 const csrfProtection = csurf({ 
     cookie: {
         httpOnly: true,
-        secure: false,
+        secure: false, // en produccion usar true
         sameSite: 'lax'
     }
 });
